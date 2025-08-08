@@ -1,1 +1,123 @@
+# Voltage Sender System Using Arduino Nano and Optocouplers
 
+## Overview
+This Arduino Nano code reads an input voltage through a voltage divider circuit and sends the measured voltage value 
+to an Arduino Uno using a frequency-modulated tone signal through optocouplers. 
+The communication is two-way: the Uno requests the voltage measurement by triggering an interrupt on the Nano,
+which responds by generating a tone with frequency proportional to the voltage level.
+
+## Key Concepts
+- Voltage Divider: Two resistors (R1 and R2) scale down a higher voltage to a measurable range for the Arduino analog pin.
+- Interrupt-driven Communication: The Uno signals the Nano by pulling an interrupt pin LOW; this triggers the Nano to send back the voltage reading encoded as a frequency.
+- Frequency Modulation: The measured voltage is mapped to a frequency range (500 Hz to 10,000 Hz). The Uno reads this frequency to determine the voltage value.
+- Optocouplers: Electrical isolation devices that allow safe communication between the two microcontrollers.
+
+## Hardware Setup
+- Voltage divider with resistors R1 (2kΩ) and R2 (1kΩ) feeding the voltage to analog pin A0.
+- Interrupt signal from Uno connected to Nano's digital pin 2 (`interruptPin`) via optocoupler.
+- Frequency output tone from Nano on digital pin 9 (`tonePin`) connected to Uno via another optocoupler.
+
+## Code Breakdown
+
+### Constants and Pin Definitions
+```cpp
+const float R1 = 2;     // Top resistor of voltage divider (2kΩ)
+const float R2 = 1;     // Bottom resistor of voltage divider (1kΩ)
+const int analogPin = A0;  // Analog input to measure voltage
+
+const int interruptPin = 2;  // Pin to receive interrupt signal from Uno
+const int tonePin = 9;       // Pin to output tone frequency back to Uno
+
+A volatile boolean flag sendVoltageFlag is used to indicate when the Uno has requested a voltage reading via an interrupt:
+volatile bool sendVoltageFlag = false;  // Flag set by interrupt handler when Uno requests voltage
+
+In the setup() function, serial communication is initialized for debugging at 9600 baud, and pins are configured. 
+The interrupt is attached to interruptPin to call the requestHandler function on the falling edge 
+(when the Uno pulls the line LOW):
+void setup() {
+  Serial.begin(9600);
+  delay(1000); // Let serial monitor sync
+
+  Serial.println("NANO: Starting voltage sender system...");
+
+  pinMode(analogPin, INPUT);
+  pinMode(interruptPin, INPUT);  // Use external pull-up resistor
+  pinMode(tonePin, OUTPUT);
+
+  attachInterrupt(digitalPinToInterrupt(interruptPin), requestHandler, FALLING);
+
+  Serial.println("NANO: Interrupt attached, system ready.");
+}
+
+Inside the loop() function, the Arduino Nano continuously reads and prints the live voltage measurement every second for monitoring purposes:
+void loop() {
+  float vinLive = readVoltage();
+  Serial.print("NANO: Live Voltage = ");
+  Serial.print(vinLive, 3);
+  Serial.println(" V");
+
+  delay(1000);
+
+If the interrupt flag sendVoltageFlag is set (meaning the Uno requested a voltage reading), the flag is cleared and the Nano proceeds to:
+Read the voltage via the readVoltage() function.
+Map the voltage value from a real-world range of 10.0 V to 14.4 V into a frequency range from 500 Hz to 10,000 Hz using a custom mapping function mapFloat().
+Output a tone at this frequency on tonePin for 100 milliseconds to allow the Uno to read the frequency.
+Stop the tone.
+
+This part of the code looks like this:
+  if (sendVoltageFlag) {
+    sendVoltageFlag = false;
+
+    Serial.println("NANO: Interrupt received — sending voltage...");
+
+    float voltage = readVoltage();
+    Serial.print("NANO: Read voltage = ");
+    Serial.print(voltage, 3);
+    Serial.println(" V");
+
+    int freq = mapFloat(voltage, 10.0, 14.4, 500, 10000);
+    freq = constrain(freq, 500, 10000);
+
+    Serial.print("NANO: Mapped frequency = ");
+    Serial.print(freq);
+    Serial.println(" Hz");
+
+    tone(tonePin, freq);
+    Serial.println("NANO: Tone started.");
+
+    delay(100);
+
+    noTone(tonePin);
+    Serial.println("NANO: Tone stopped.");
+  }
+}
+
+The interrupt service routine requestHandler() is very simple: it just sets the sendVoltageFlag to true when the Uno triggers the interrupt signal on interruptPin:
+void requestHandler() {
+  sendVoltageFlag = true;
+}
+
+The readVoltage() function performs the following steps:
+Reads the raw analog-to-digital converter (ADC) value from the analog pin analogPin.
+Converts this ADC value to the voltage at the analog pin, accounting for the measured supply voltage (vcc), which is approximately 4.86 V here.
+Applies the voltage divider formula to calculate the actual input voltage (vin) from the scaled voltage at the analog pin.
+The function returns the reconstructed input voltage as a floating-point number.
+
+float readVoltage() {
+  const float vcc = 4.86;  // Actual measured supply voltage (adjust as necessary)
+  int adcValue = analogRead(analogPin);
+  float vOut = adcValue * (vcc / 1023.0);        // Voltage at analog pin
+  float vin = vOut * ((R1 + R2) / R2);           // Calculated input voltage
+  return vin;
+}
+
+Finally, the mapFloat() function is a utility that maps a floating-point input value from one range (in_min to in_max) into an integer output range (out_min to out_max). This is similar to Arduino’s built-in map() function, but it handles float inputs and outputs an integer. This is used to convert the voltage value into a frequency value:
+int mapFloat(float x, float in_min, float in_max, int out_min, int out_max) {
+  return (int)((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
+}
+
+Summary
+The Arduino Nano continuously monitors an input voltage via a voltage divider.
+When the Arduino Uno requests the voltage by triggering an interrupt, the Nano reads the voltage and sends back a tone whose frequency represents the measured voltage.
+Communication uses optocouplers for electrical isolation.
+Serial debug output provides useful status messages for monitoring and troubleshooting.
