@@ -1,3 +1,51 @@
+/*
+# Arduino UNO – Averaged Frequency-to-Voltage Measurement from Nano
+
+## Overview
+This Arduino UNO sketch requests voltage data from an Arduino Nano and measures the frequency of the returned square wave.  
+Unlike the single-pulse version, this code collects multiple pulses, averages their periods, and then converts the result into a voltage for improved accuracy and noise filtering.
+
+---
+
+## Features
+- Sends a voltage request to Nano every 3 seconds.
+- Collects multiple (up to 5) pulse periods for averaging.
+- Filters out invalid/noisy measurements.
+- Converts the average frequency to voltage using `mapFloat()`.
+- Outputs clean, stable voltage readings over Serial.
+
+---
+
+## Pin Assignments
+- requestPin (7): Output pin to send request to Nano via optocoupler.
+- inputPin (2): Interrupt input to receive square wave from Nano via optocoupler.
+
+---
+
+## Measurement Process
+1. Every 3 seconds:
+   - Reset measurement variables.
+   - Send a short request pulse to Nano.
+   - Begin capturing rising edges from Nano’s response signal.
+2. On each rising edge:
+   - Measure the time since the last edge.
+   - Store valid pulse periods (ignoring out-of-range noise).
+3. Once 5 pulses are collected:
+   - Compute the average period.
+   - Convert to frequency, then voltage.
+4. Output the voltage to the Serial Monitor.
+
+---
+
+## Frequency-to-Voltage Conversion
+The formula used:  
+Voltage = mapFloat(frequency, 500 Hz, 10,000 Hz, 10.0 V, 14.4 V)
+  - Frequencies below 500 Hz map to 10.0 V.
+- Frequencies above 10 kHz map to 14.4 V.
+- Output constrained between 10.0 V and 14.4 V.
+
+---
+*/
 const int requestPin = 7;
 const int inputPin = 2;
 
