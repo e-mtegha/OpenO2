@@ -9,11 +9,11 @@ When the signal is received, the Nano sends a short HIGH pulse back to the Uno t
 - Communication is isolated through optocouplers to protect both devices.
 
 ## Functional Flow
-1. **Interrupt Listening:**  
+1. Interrupt Listening: 
    The Nano uses an interrupt on `inputPin` to instantly detect a signal from the Uno.
-2. **Signal Handling:**  
+2. Signal Handling:
    Once the signal is received, it sets a flag (`signalReceived = true`).
-3. **Reply Pulse:**  
+3. Reply Pulse:  
    In the main loop, when the flag is set, it sends a short HIGH pulse to the Uno via `replyPin` to confirm receipt.
 
 ## Notes
