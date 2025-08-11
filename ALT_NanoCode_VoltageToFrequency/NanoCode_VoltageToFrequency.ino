@@ -1,3 +1,49 @@
+/*
+# Arduino Nano – Voltage Measurement & Frequency Response for UNO
+
+## Overview
+This Arduino Nano sketch measures a DC voltage using a resistor divider, then outputs a square wave whose frequency corresponds to that voltage.  
+The UNO requests a reading via an optocoupler pulse, triggering the Nano to send the encoded frequency.
+
+---
+
+## Features
+- Measures DC voltage through an analog pin and a voltage divider.
+- Maps the measured voltage to a frequency (500 Hz – 10 kHz).
+- Uses an interrupt to respond instantly when the UNO requests data.
+- Sends frequency via `tone()` function for the UNO to measure.
+- Includes live serial monitoring of measured voltage.
+
+---
+
+## Pin Assignments
+- analogPin (A0): Measures voltage via voltage divider.
+- interruptPin (2): Input from UNO (via optocoupler) to trigger voltage send.
+- tonePin (9): Output to UNO (via optocoupler) carrying square wave.
+
+---
+
+## Measurement Process
+1. Continuously measures voltage for live monitoring (once per second).
+2. When the UNO sends a short LOW pulse to `interruptPin`:
+   - Reads the current voltage.
+   - Maps it to a frequency between 500 Hz and 10 kHz.
+   - Sends the tone for 100 ms, then stops.
+3. Voltage reconstruction formula:
+V_in = V_out × ( (R1 + R2) / R2 )
+Where `V_out` is measured at A0, `R1` is the top resistor, and `R2` is the bottom resistor.
+
+---
+
+## Voltage-to-Frequency Mapping
+The formula used:  
+Frequency = mapFloat(voltage, 10.0 V, 14.4 V, 500 Hz, 10000 Hz)
+- Voltages below 10.0 V map to 500 Hz.
+- Voltages above 14.4 V map to 10 kHz.
+- Output is constrained within 500–10,000 Hz.
+
+---
+*/
 // === Voltage Divider Constants ===
 const float R1 = 2; // Top resistor
 const float R2 = 1;  // Bottom resistor
