@@ -3,7 +3,7 @@
 ## Overview
 This Arduino Nano code reads an input voltage through a voltage divider circuit and sends the measured voltage value 
 to an Arduino Uno using a frequency-modulated tone signal through optocouplers. 
-The communication is two-way: the Uno requests the voltage measurement by triggering an interrupt on the Nano,
+The communication is two-way: the Uno (or any other microcontroller) requests the voltage measurement by triggering an interrupt on the Nano,
 which responds by generating a tone with frequency proportional to the voltage level.
 
 ## Key Concepts
@@ -13,7 +13,7 @@ which responds by generating a tone with frequency proportional to the voltage l
 - Optocouplers: Electrical isolation devices that allow safe communication between the two microcontrollers.
 
 ## Hardware Setup
-- Voltage divider with resistors R1 (2kΩ) and R2 (1kΩ) feeding the voltage to analog pin A0.
+- Voltage divider with resistors R1 (20kΩ) and R2 (10kΩ) feeding the voltage to analog pin A0.
 - Interrupt signal from Uno connected to Nano's digital pin 2 (`interruptPin`) via optocoupler.
 - Frequency output tone from Nano on digital pin 9 (`tonePin`) connected to Uno via another optocoupler.
 
