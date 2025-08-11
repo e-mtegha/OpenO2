@@ -88,3 +88,52 @@ long readVcc() {
   long vcc = 1125300L / result;     // Calculate Vcc in millivolts
   return vcc;
 }
+/*
+Explanation of the readVcc () Function
+
+long readVcc() {
+Defines a function named readVcc that returns a long integer representing the supply voltage in millivolts.
+
+    // Configure ADC to read internal 1.1V reference
+  ADMUX = _BV(REFS0)                // Use Vcc as reference
+        | _BV(MUX3) | _BV(MUX2) | _BV(MUX1); // Select 1.1V as input
+ADMUX is the ADC Multiplexer Selection Register, which controls what the ADC measures and its reference voltage.
+_BV(bit) is a macro that means “bit value,” or (1 << bit).
+_BV(REFS0) sets the ADC reference voltage to Vcc (the Arduino’s supply voltage).
+_BV(MUX3) | _BV(MUX2) | _BV(MUX1) selects the internal 1.1V reference as the input channel for the ADC instead of an external pin.
+Together, this configures the ADC to measure the internal 1.1V reference voltage relative to Vcc as the ADC reference.
+
+  delay(2);                         // Let voltage settle
+Waits 2 milliseconds to allow the ADC input voltage to stabilize before starting conversion.
+
+  ADCSRA |= _BV(ADSC);              // Start conversion
+ADCSRA is the ADC Control and Status Register A.
+Setting the ADSC bit starts an Analog-to-Digital Conversion.
+
+    while (bit_is_set(ADCSRA, ADSC)); // Wait for conversion to finish
+Loops continuously while the ADSC bit remains set, meaning the ADC is busy converting.
+When the conversion is complete, ADSC bit clears, and the loop ends.
+
+    uint16_t result = ADC;
+Reads the 10-bit ADC conversion result from the ADC register into a 16-bit unsigned integer variable result.
+
+  long vcc = 1125300L / result;     // Calculate Vcc in millivolts
+Calculates the supply voltage vcc in millivolts.
+1125300L is a constant calculated as: (1.1 V * 1023 * 1000)
+1.1 V is the internal reference voltage in volts
+1023 is the max ADC value (10-bit ADC)
+1000 converts volts to millivolts
+The formula is:
+Vcc = (1.1 V * 1023 * 1000) / ADC reading
+Because the ADC measured the internal 1.1V reference using Vcc as the ADC reference, the ADC result inversely relates to Vcc.
+This formula derives the actual supply voltage Vcc from the ADC reading.
+
+  return vcc;
+}
+Returns the calculated supply voltage in millivolts to wherever the function was called.
+
+Summary:
+This function cleverly uses the Arduino's internal 1.1V reference to measure how much voltage the Arduino is actually powered by (Vcc), without needing an external voltage sensor.
+It configures the ADC to measure the internal reference voltage relative to Vcc, performs an ADC conversion, then calculates the supply voltage from the ADC value. 
+The result is returned as a long integer in millivolts.
+*/
