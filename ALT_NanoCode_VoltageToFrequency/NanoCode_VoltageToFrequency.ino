@@ -1,5 +1,5 @@
 /*
-# Arduino Nano – Voltage Measurement & Frequency Response for UNO
+# Arduino Nano – Voltage Measurement & Frequency Response for UNO(Or other Microcontroller)
 
 ## Overview
 This Arduino Nano sketch measures a DC voltage using a resistor divider, then outputs a square wave whose frequency corresponds to that voltage.  
@@ -25,7 +25,7 @@ The UNO requests a reading via an optocoupler pulse, triggering the Nano to send
 
 ## Measurement Process
 1. Continuously measures voltage for live monitoring (once per second).
-2. When the UNO sends a short LOW pulse to `interruptPin`:
+2. When the UNO sends a short HIGH pulse to `interruptPin` the nano does the following:
    - Reads the current voltage.
    - Maps it to a frequency between 500 Hz and 10 kHz.
    - Sends the tone for 100 ms, then stops.
