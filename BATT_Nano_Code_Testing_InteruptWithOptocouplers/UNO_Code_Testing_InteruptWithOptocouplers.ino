@@ -1,3 +1,38 @@
+/*
+# Arduino UNO – Simple Signal Exchange with Nano
+
+## Overview
+This Arduino UNO sketch tests communication with an Arduino Nano through opto-isolated signal lines.  
+It sends a short trigger signal to the Nano, waits for a response, and reports the result via serial.
+
+---
+
+## Features
+- Sends a HIGH pulse to the Nano to request a response.
+- Waits for a reply within a fixed timeout period (1 second).
+- Reports success or failure over Serial.
+- Includes a pause between cycles to avoid continuous triggering.
+
+---
+
+## Pin Assignments
+- triggerPin (7): Output pin sending request signal to Nano via optocoupler.
+- receivePin (6): Input pin receiving response signal from Nano via optocoupler (with external pull-up).
+
+---
+
+## Operation Sequence
+1. Send trigger signal:
+   - Set `triggerPin` HIGH for 100 ms.
+   - Then return it LOW.
+2. Wait for Nano's response:
+   - Continuously check `receivePin` for LOW state (response signal).
+   - If received within 1 second → print success.
+   - If no signal within 1 second → print failure.
+3. Delay 2 seconds before repeating.
+
+---
+*/
 const int triggerPin = 7; // Output to Nano (via opto)
 const int receivePin = 6; // Input from Nano (via opto)
 
