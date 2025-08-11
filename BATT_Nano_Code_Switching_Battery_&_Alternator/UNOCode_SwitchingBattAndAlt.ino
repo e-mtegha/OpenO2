@@ -1,3 +1,50 @@
+/*
+# Arduino UNO – Automatic Alternator/Battery Switching System
+
+## Overview
+This Arduino UNO sketch manages automatic switching between alternator and battery power based on measured alternator voltage.  
+It works with an Arduino Nano that sends a tone signal representing alternator voltage. The UNO measures this tone frequency, maps it to a voltage, and switches relays accordingly.
+
+---
+
+## Features
+- Requests alternator voltage signal from the Nano periodically.
+- Measures tone frequency using interrupts.
+- Maps frequency to voltage range (10.0–14.4 V).
+- Switches between battery and alternator relays based on threshold (12.3 V).
+- Frequent checks to avoid power interruptions.
+
+---
+
+## Pin Assignments
+- requestPin (7): Signal output to request voltage from Nano.
+- inputPin (2): Interrupt input for tone signal from Nano.
+- batterySwitchPin (5): Controls battery relay.
+- alternatorSwitchPin (4): Controls alternator relay.
+- analogPin (A0): Reserved for voltage divider measurement (not directly used here).
+
+---
+
+## Voltage Divider Setup
+- R1 = 2.0 Ω, R2 = 1.0 Ω — Configured for battery voltage measurement.
+- VCC = 5.00 V — Arduino reference voltage for analog reads.
+
+---
+
+## Pulse Measurement
+- Measures time between rising edges of tone signal to determine frequency.
+- Uses `pulsePeriods[]` to store recent valid measurements.
+- `mapFloat()` function converts frequency to voltage.
+
+---
+
+## Switching Logic
+1. If alternator voltage > 12.3 V → Switch to alternator relay ON, battery relay OFF.
+2. Else → Switch to battery relay ON, alternator relay OFF.
+3. If no valid tone is received → Report error.
+
+---*/
+
 // === Pins ===
 const int requestPin = 7;     // Output to request alternator data
 const int inputPin = 2;       // Interrupt input for alternator signal
