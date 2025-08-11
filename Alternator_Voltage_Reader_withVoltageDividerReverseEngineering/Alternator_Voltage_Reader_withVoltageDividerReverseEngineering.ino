@@ -1,3 +1,42 @@
+/*
+# Overview
+This Arduino sketch measures an external voltage using a voltage divider and automatically compensates for variations in the Arduino’s own supply voltage (`Vcc`).  
+It does this by:
+1. Measuring `Vcc` precisely using the internal 1.1V reference.
+2. Reading the analog input from a voltage divider.
+3. Reconstructing the original external voltage based on the divider ratio.
+
+## Hardware Connections
+- Voltage Divider: 
+  - `R1` (top resistor) connected from Vin (voltage to measure) → A0.
+  - `R2` (bottom resistor) connected from A0 → GND.
+- Analog Pin: 
+  - `A0` reads the divided voltage.
+- This allows measurement of voltages higher than `Vcc` (up to the safe limit of A0) by scaling them down.
+
+## Voltage Measurement Method
+1. Read Vcc:
+   Uses the ATmega’s internal 1.1V reference to measure the actual board voltage supply.  
+   This improves accuracy when USB power or regulator voltage fluctuates.
+2. Read Analog Value:  
+   Uses `analogRead(A0)` to capture the divided voltage.
+3. Reconstruct Vin:
+   Applies the voltage divider formula:  
+   
+   V{in} = V{out} * ({R1 + R2}{R2})
+   
+4. Print Data:
+   Displays `Vcc`, raw ADC value, measured `Vout`, and reconstructed `Vin`.
+
+## Notes
+- This method is much more accurate than assuming `Vcc = 5.00V`.
+- The formula in `readVcc()` (`1125300L / result`) is based on the calibrated internal reference of 1.1V.
+- Ensure `R1` and `R2` are chosen to keep `Vout` < `Vcc` at all times.
+
+---
+
+# Code
+*/
 // Voltage divider values
 const float R1 = 2; // Top resistor (connected to Vin)
 const float R2 = 1; // Bottom resistor (connected to GND)
