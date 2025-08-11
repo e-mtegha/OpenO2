@@ -1,3 +1,65 @@
+/*
+# Overview
+This Arduino UNO sketch works as part of an alternator voltage monitoring system.  
+It communicates with a Nano (or other MCU) to:
+1. Request alternator test pulses.
+2. Measure those pulses to estimate alternator output voltage.
+3. Read battery voltage directly via a voltage divider.
+4. Output both readings to the Serial Monitor.
+
+---
+
+## Features
+- Battery Voltage Measurement 
+  Reads `A0` through a voltage divider (R1, R2) to measure actual battery voltage.
+- Alternator Voltage Estimation 
+  Requests the Nano to send a tone signal corresponding to alternator frequency.  
+  The UNO measures the pulse period using an interrupt, converts to frequency,  
+  then maps frequency to an estimated alternator voltage.
+- Timing Control
+  - Battery voltage is read every 1 second.
+  - Alternator voltage is requested every 3 seconds.
+- Noise Filtering 
+  Discards invalid or out-of-range pulses before calculating averages.
+
+---
+
+## Hardware Connections
+- UNO Pins 
+  - `requestPin (7)` → Output to Nano (triggers alternator test tone).
+  - `inputPin (2)`   → Interrupt input from Nano tone signal.
+  - `analogPin (A0)` → Voltage divider connected to battery.
+- Voltage Divider for Battery 
+  - R1: Top resistor between battery positive and A0.
+  - R2: Bottom resistor between A0 and GND.
+  - This allows safe measurement of voltages higher than 5V.
+
+---
+
+## Timing & Measurement Logic
+1. Every second, read battery voltage using:
+   
+   V{battery} = V{out} * ({R1 + R2}{R2})
+   
+   where  V{out}  is calculated from ADC reading and assumed VCC.
+2. Every 3 seconds:
+   - Set `requestPin` HIGH for 100 microseconds, then LOW to signal Nano.
+   - Nano outputs a tone proportional to alternator frequency.
+   - UNO uses interrupt to capture pulse periods.
+   - If at least 5 valid pulses are measured, compute average period,  
+     convert to frequency, then map to voltage range (10.0–14.4 V).
+3. Print results via Serial Monitor.
+
+---
+
+## Notes
+- The `mapFloat()` function works like Arduino’s `map()` but for floating-point numbers.
+- The code assumes `VCC = 5.00` V — if accuracy is critical, you could measure VCC dynamically like 'Alternator_Voltage_ReaderWithVoltageDividerReverseEngineering' Sketch.
+- The ISR (`pulseISR`) is lightweight to avoid timing issues — only minimal processing is done there.
+
+---
+# Code
+*/
 // === Pins ===
 const int requestPin = 7;     // Output to request alternator data
 const int inputPin = 2;       // Interrupt input for alternator signal
