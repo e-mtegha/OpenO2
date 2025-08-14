@@ -1,10 +1,9 @@
 // UNOCode_SwitchingBattAndAlt_Version_3_with_RGB
 
 /*
- --> Multiplier instead of full voltage divider formula
- --> Frequency range from 500Hz - 4900Hz
- --> Added battery voltage measurement
- --> Added fast failover to battery if no alternator data is received
+ --> commented out delay after requesting voltage from nano
+ --> Changed request interval to 50ms and nodatatimeout to 100ms
+ -->Commented out all serial prints
 */
 
 // === Pins ===
