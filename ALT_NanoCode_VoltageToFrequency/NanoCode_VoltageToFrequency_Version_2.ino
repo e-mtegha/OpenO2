@@ -38,7 +38,7 @@ void loop() {
   Serial.print(vinLive, 3);
   Serial.println(" V");
 
-  delay(1000); // Adjust as needed
+  delay(2); // Adjust as needed
 
   // Check if Uno requested a voltage
   if (sendVoltageFlag) {
