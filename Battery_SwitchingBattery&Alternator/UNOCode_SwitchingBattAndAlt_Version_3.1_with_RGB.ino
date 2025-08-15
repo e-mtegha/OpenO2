@@ -4,6 +4,7 @@
  --> commented out delay after requesting voltage from nano
  --> Changed request interval to 50ms and nodatatimeout to 100ms
  -->Commented out all serial prints
+ --> Changed the switching logic to always start by turning off one source before switching to the other
 */
 
 // === Pins ===
