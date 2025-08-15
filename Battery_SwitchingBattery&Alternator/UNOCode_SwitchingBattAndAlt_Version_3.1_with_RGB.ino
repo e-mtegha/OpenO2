@@ -4,7 +4,9 @@
  --> commented out delay after requesting voltage from nano
  --> Changed request interval to 50ms and nodatatimeout to 100ms
  -->Commented out all serial prints
- --> Changed the switching logic to always start by turning off one source before switching to the other
+ -->Changed the switching logic to always start by turning off one source before switching to the other
+ -->Introduced Interupt enable and Disable
+ --> 10ms delay inside request voltage from nano function
 */
 
 // === Pins ===
@@ -76,7 +78,7 @@ void loop() {
     isMeasuring = true;
 
     requestVoltageFromNano();
-    // delay(20);  // Allow tone to stabilize
+    
   }
 
   // When tone data is ready
@@ -163,6 +165,8 @@ void requestVoltageFromNano() {
   digitalWrite(requestPin, HIGH);
   delayMicroseconds(100);
   digitalWrite(requestPin, LOW);
+  delay(10);
+  interrupts();    // Re-enables all interrupts globally
 }
 
 // ISR for pulse measurement
@@ -185,6 +189,7 @@ void pulseISR() {
   }
 
   lastRiseTime = now;
+  noInterrupts();  // Disables all interrupts globally
 }
 
 float mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
@@ -195,3 +200,4 @@ void setColor(int redValue, int greenValue,  int blueValue) {
   analogWrite(redPin, redValue);
   analogWrite(greenPin,  greenValue);
   }
+
