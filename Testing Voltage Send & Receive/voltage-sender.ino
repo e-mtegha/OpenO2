@@ -1,6 +1,6 @@
 // === Voltage Divider Constants ===
-const float R1 = 19790.0; // Top resistor
-const float R2 = 9830.0;  // Bottom resistor
+const float R1 = 3; // Top resistor
+const float R2 = 1;  // Bottom resistor
 const int analogPin = A1;
 
 // === Communication Pins ===
