@@ -39,19 +39,27 @@ inline void taskIndicators(void *pv) {
 
 
   for (;;) {
-    digitalWrite(alternatorSwitch2, LOW);
+    // digitalWrite(alternatorSwitch2, LOW);
     if (alternatorVoltage > 12.3) {
       digitalWrite(batterySwitch, LOW);
       digitalWrite(alternatorSwitch, HIGH);
-      // digitalWrite(alternatorSwitch2, HIGH);
+      digitalWrite(alternatorSwitch2, LOW);
       digitalWrite(alternatorPower, HIGH);
       digitalWrite(RGBgreen, 0);
       digitalWrite(RGBred, 0);
 
-    } else {
+    } else if(alternatorVoltage > 11.5){
+       digitalWrite(alternatorSwitch, LOW);
+        digitalWrite(alternatorSwitch2, LOW);
+        digitalWrite(batterySwitch, HIGH);
+        digitalWrite(alternatorPower, HIGH);
+        digitalWrite(RGBred, 0);
+        digitalWrite(RGBgreen, 1);
+
+    }    else {
       if (batteryVoltage > 12.6) {
         digitalWrite(alternatorSwitch, LOW);
-        // digitalWrite(alternatorSwitch2, LOW);
+        digitalWrite(alternatorSwitch2, HIGH);
         digitalWrite(batterySwitch, HIGH);
         digitalWrite(alternatorPower, LOW);
         digitalWrite(RGBred, 0);
