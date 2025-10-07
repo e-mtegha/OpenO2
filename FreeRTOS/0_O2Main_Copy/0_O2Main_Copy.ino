@@ -26,6 +26,7 @@ int batterySwitch = 8;
 int alternatorSwitch = 9;
 int alternatorSwitch2 = 10;
 int PWMPin = 11;
+int pwmValue = 0;
 
 //Analog pin Globlas
 int ANALOG_PIN = A6;    // Analog pin for battery voltage
@@ -43,10 +44,14 @@ int x = 0;
 // Logger task
 void taskLogger(void *pv) {
   for (;;) {
-  // Map flowRate (0–10) to PWM duty cycle (90–125)
-    int pwmValue = (int)mapFloat(flowRate, 0.0, 10.0, 90.0, 255.0);
+    if (flowRate > 10.0) {
+      pwmValue = 255;
+    } else {
+      // Map flowRate (0–10) to PWM duty cycle (90–125)
+      pwmValue = (int)mapFloat(flowRate, 0.0, 10.0, 90.0, 255.0);
 
-    analogWrite(PWMPin, pwmValue);
+      analogWrite(PWMPin, pwmValue);
+    }
 
     Serial.print("Purity: ");
     Serial.print(currentPurity);
