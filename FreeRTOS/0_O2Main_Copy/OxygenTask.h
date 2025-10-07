@@ -36,7 +36,7 @@ inline void taskOxygen(void *pv) {
         while (!Serial.available()) vTaskDelay(1);
         u = Serial.read();
         while (!Serial.available()) vTaskDelay(1);
-        l = Serial.read();
+        l = Serial.read() + 3;
         // flowRate = (u * 256.0 + l) / 10.0;
         rawFlowRate = round((u * 256.0 + l) / 10.0 * 10.0) / 10.0;
         // Apply exponential moving average
