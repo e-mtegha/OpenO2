@@ -1,0 +1,75 @@
+/*
+================================================================================
+This code runs on an Arduino Nano and is responsible for:
+1. Reading the system voltage through a voltage divider.
+2. Sending the measured voltage to an Arduino Uno via a frequency signal.
+3. Using interrupts for communication with the Uno.
+
+--------------------------------------------------------------------------------
+=== Voltage Divider Constants ===
+R1 = 19790 Ω (top resistor)
+R2 = 9830 Ω  (bottom resistor)
+analogPin = A0
+
+The voltage divider scales down higher voltages so the Nano's ADC can read them.
+The ADC reads from 0–5 V, and we calculate the actual voltage from the scaled reading.
+
+--------------------------------------------------------------------------------
+=== Communication Pins ===
+interruptPin (D2) → Input from Uno (via optocoupler 1)
+tonePin (D9 / OC1A) → Output to Uno (via optocoupler 2)
+
+The Uno requests a voltage reading by toggling interruptPin.
+The Nano responds by outputting a frequency corresponding to the measured voltage.
+
+--------------------------------------------------------------------------------
+=== Control Variables ===
+sendVoltageFlag — Set in the ISR when the Uno requests voltage data.
+This flag ensures that voltage sending happens in the main loop, not in the ISR.
+
+--------------------------------------------------------------------------------
+=== setup() ===
+1. Start serial communication for debugging.
+2. Configure analogPin as INPUT.
+3. Configure communication pins.
+4. Attach interrupt to interruptPin (FALLING edge) → triggers requestHandler().
+5. System ready message sent over Serial.
+
+--------------------------------------------------------------------------------
+=== loop() ===
+1. Reads live voltage once per second and prints it (for debugging).
+2. If sendVoltageFlag is set:
+   - Reset the flag.
+   - Read the current voltage.
+   - Map voltage to a frequency between 500–10000 Hz.
+   - Constrain frequency to stay in range.
+   - Send frequency pulse for 20 cycles using sendFrequency().
+   - Print debug messages about each step.
+
+--------------------------------------------------------------------------------
+=== requestHandler() ===
+Interrupt Service Routine.
+Simply sets sendVoltageFlag to true — no heavy processing here.
+
+--------------------------------------------------------------------------------
+=== readVoltage() ===
+1. Reads ADC value from analogPin.
+2. Converts ADC value to actual voltage using the voltage divider formula:
+   vin = vOut × ((R1 + R2) / R2)
+3. Returns the measured voltage in volts.
+
+--------------------------------------------------------------------------------
+=== sendFrequency(frequency, numCycles) ===
+1. Calculates OCR1A value for desired frequency.
+2. Configures Timer1 in CTC mode, no prescaler, toggling OC1A (D9).
+3. Toggles the pin the required number of times to produce numCycles of the frequency.
+4. Stops Timer1 and ensures tonePin is LOW at the end.
+
+--------------------------------------------------------------------------------
+=== mapFloat() ===
+Maps a float value from one range to another and returns an integer.
+Used to convert voltage readings into frequency values.
+
+================================================================================
+*/
+

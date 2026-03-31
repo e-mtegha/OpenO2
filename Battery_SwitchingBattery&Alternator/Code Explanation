@@ -1,0 +1,190 @@
+# Automatic Switching System for Alternator and Battery Using Arduino Uno
+
+This Arduino Uno code implements an automatic switching system that measures the alternator voltage via pulse signals received from another microcontroller (like an Arduino Nano), and switches power sources between the alternator and battery accordingly.
+
+The system periodically requests voltage data from the Nano, which sends the voltage information encoded as frequency-modulated pulses. 
+The Uno measures the pulse durations (periods), calculates the frequency, converts it back to voltage, and then uses this voltage to decide whether to switch power supply to the alternator or battery.
+
+---
+
+### Hardware and Pin Setup:
+
+- `requestPin` (pin 7): Output pin used to request voltage data from the Nano.
+- `inputPin` (pin 2): Interrupt input pin where pulse signals representing voltage frequency are received.
+- `batterySwitchPin` (pin 5): Output pin controlling a switch to the battery power source.
+- `alternatorSwitchPin` (pin 4): Output pin controlling a switch to the alternator power source.
+- Voltage divider resistors (R1 = 20000.0kΩ and R2 = 10000.0kΩ) connected to analog pin A0 to monitor battery voltage if needed (not directly used in this code).
+- VCC voltage assumed as 5.00 V for analog reference.
+
+---
+
+### Variables for Pulse Measurement:
+
+- `lastRiseTime`: Timestamp of the last rising edge pulse (in microseconds).
+- `pulsePeriods[]`: Array storing measured pulse durations between rising edges.
+- `pulseIndex`: Current index in the pulsePeriods array.
+- `pulseCount`: Number of valid pulses counted.
+- `lastRequestTime`: Timestamp of last voltage request sent.
+- `requestInterval`: Time interval (200 ms) between voltage requests.
+- `dataReady`: Flag indicating that enough pulse data has been collected for processing.
+- `isMeasuring`: Flag indicating whether the system is currently measuring pulse data.
+
+---
+
+### Setup Function:
+
+- Initializes serial communication at 9600 baud for debugging.
+- Configures pins: sets `requestPin`, `batterySwitchPin`, and `alternatorSwitchPin` as OUTPUT and initializes them LOW.
+- Configures `inputPin` as INPUT and attaches an interrupt service routine (`pulseISR`) triggered on the rising edge of the pulse signal.
+- Prints a startup message confirming the system is ready.
+
+
+void setup() {
+  Serial.begin(9600);
+  delay(1000);
+
+  pinMode(requestPin, OUTPUT);
+  digitalWrite(requestPin, LOW);
+
+  pinMode(inputPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(inputPin), pulseISR, RISING);
+
+  pinMode(batterySwitchPin, OUTPUT);
+  pinMode(alternatorSwitchPin, OUTPUT);
+
+  digitalWrite(batterySwitchPin, LOW);
+  digitalWrite(alternatorSwitchPin, LOW);
+
+  Serial.println("UNO: Auto switch system ready.");
+}
+
+Main Loop:
+Regularly (every 200 ms) sends a request signal to the Nano by briefly toggling requestPin HIGH for 100 microseconds to request the alternator voltage data.
+Clears pulse measurement data and flags before each measurement.
+Waits for pulse data to be collected and processed.
+Once enough pulses are received (dataReady flag set), it calculates the average pulse period (duration between rising edges).
+Converts average pulse period into frequency (in Hz).
+Maps the frequency back to an estimated alternator voltage value using the known relationship.
+Prints the alternator voltage to the serial monitor.
+
+Implements switching logic:
+If alternator voltage is above 12.3 V, it switches power to the alternator.
+Otherwise, it switches to the battery.
+If the pulse data is invalid, prints an error message.
+
+------
+void loop() {
+  unsigned long currentTime = millis();
+
+  // Request alternator voltage frequently
+  if (currentTime - lastRequestTime >= requestInterval) {
+    lastRequestTime = currentTime;
+
+    pulseCount = 0;
+    pulseIndex = 0;
+    lastRiseTime = 0;
+    dataReady = false;
+    isMeasuring = true;
+
+    requestVoltageFromNano();
+    delay(50);  // Allow tone to stabilize
+  }
+
+  // When tone data is ready
+  if (dataReady && isMeasuring) {
+    isMeasuring = false;
+
+    float sum = 0;
+    int validCount = 0;
+
+    for (int i = 0; i < pulseIndex; i++) {
+      unsigned long p = pulsePeriods[i];
+      if (p > 100 && p < 2000) {
+        sum += p;
+        validCount++;
+      }
+    }
+
+    if (validCount > 0) {
+      float avgPeriod = sum / validCount;
+      float freq = 1000000.0 / avgPeriod;
+      float alternatorVoltage = mapFloat(freq, 500.0, 10000.0, 10.0, 14.4);
+      alternatorVoltage = constrain(alternatorVoltage, 10.0, 14.4);
+
+      Serial.print("Alternator Voltage: ");
+      Serial.print(alternatorVoltage, 3);
+      Serial.println(" V");
+
+      // === Switching Logic ===
+      if (alternatorVoltage > 12.3) {
+        digitalWrite(alternatorSwitchPin, HIGH);
+        digitalWrite(batterySwitchPin, LOW);
+        Serial.println("Switching to Alternator.");
+      } else {
+        digitalWrite(alternatorSwitchPin, LOW);
+        digitalWrite(batterySwitchPin, HIGH);
+        Serial.println("Switching to Battery.");
+      }
+
+    } else {
+      Serial.println("UNO: Invalid tone signal.");
+    }
+
+    dataReady = false;
+  }
+}
+
+---------
+Requesting Voltage from Nano:
+This function toggles the requestPin HIGH briefly to signal the Nano to send the voltage data:
+void requestVoltageFromNano() {
+  digitalWrite(requestPin, HIGH);
+  delayMicroseconds(100);
+  digitalWrite(requestPin, LOW);
+}
+-------
+
+Interrupt Service Routine (ISR) for Pulse Measurement:
+Triggered on every rising edge pulse received on inputPin.
+Measures the time interval between successive pulses.
+Stores valid pulse durations in pulsePeriods[].
+Once 5 valid pulses are captured, sets dataReady flag to true indicating data collection is complete.
+
+void pulseISR() {
+  if (!isMeasuring) return;
+
+  unsigned long now = micros();
+
+  if (lastRiseTime != 0 && pulseIndex < 10) {
+    unsigned long period = now - lastRiseTime;
+
+    if (period >= 50 && period <= 5000) {
+      pulsePeriods[pulseIndex++] = period;
+      pulseCount++;
+    }
+
+    if (pulseCount >= 5) {
+      dataReady = true;
+    }
+  }
+
+  lastRiseTime = now;
+}
+
+--------
+Floating-point Mapping Function:
+Similar to Arduino's built-in map() but works with floats for both input and output.
+Used to convert frequency values into voltage estimates:
+
+float mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+---------
+Summary
+This system automatically switches power between the alternator and battery based on the measured alternator voltage.
+The Uno requests frequency-encoded voltage data from a Nano.
+Pulse durations are measured via interrupts to calculate frequency.
+Frequency is mapped back to voltage.
+Power source switches accordingly with safe timing and validation.
+Serial debug output provides voltage readings and switching status.
